@@ -1,0 +1,103 @@
+# =============================================================================
+# ScaleCommerce — Terraform Variable Values
+#
+# Copy this file to terraform.tfvars and fill in the values marked REQUIRED.
+# The setup.sh script handles most of this automatically.
+#
+# Cost guide (estimated monthly at AWS on-demand prices, us-east-1):
+#   NAT Gateway ×1     ~$32     (×2 if single_nat_gateway = false)
+#   ALB ×2 (ext+int)   ~$33
+#   EC2 t3.micro ×2    ~$15     (free tier: 750h/mo first 12 months)
+#   RDS db.t3.micro    ~$13     (free tier: 750h/mo first 12 months)
+#   CloudFront         ~$0      (free tier: 1TB + 10M requests/mo)
+#   S3                 ~$1
+#   CloudWatch/Lambda  ~$1
+#   ─────────────────────────
+#   Dev total:         ~$95/month
+#
+# For lab use: run ./scripts/deploy.sh, validate, then ./scripts/destroy.sh
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Project identity
+# -----------------------------------------------------------------------------
+project_name = "scalecommerce"
+environment  = "dev"
+aws_region   = "us-east-1"
+owner        = "Analo"
+
+# -----------------------------------------------------------------------------
+# Networking
+# Cost: single_nat_gateway = true saves ~$32/month vs one NAT per AZ
+# -----------------------------------------------------------------------------
+vpc_cidr                 = "10.0.0.0/16"
+public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+private_web_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+private_app_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24"]
+private_db_subnet_cidrs  = ["10.0.31.0/24", "10.0.32.0/24"]
+single_nat_gateway       = true
+
+# REQUIRED: Replace with your actual IP to restrict SSH access to the bastion.
+# Find your current IP: curl -s ifconfig.me
+allowed_ssh_cidr_blocks = ["0.0.0.0/0"]
+
+# -----------------------------------------------------------------------------
+# Compute
+# REQUIRED: fill in ami_id (setup.sh does this automatically)
+# -----------------------------------------------------------------------------
+ami_id        = ""              # REQUIRED — see setup.sh
+key_pair_name = "scalecommerce-key"
+
+web_instance_type     = "t3.micro"
+app_instance_type     = "t3.micro"
+bastion_instance_type = "t3.micro"
+
+# Dev: min=1 to avoid idle charges during lab sessions
+# Prod: set min=2, desired=2 for HA across two AZs
+web_asg_min_size         = 1
+web_asg_max_size         = 6
+web_asg_desired_capacity = 1
+
+app_asg_min_size         = 1
+app_asg_max_size         = 4
+app_asg_desired_capacity = 1
+
+app_port          = 3000
+health_check_path = "/health"
+
+# Optional: ACM certificate ARN for HTTPS. Leave empty for HTTP-only (dev/lab).
+certificate_arn = ""
+
+# -----------------------------------------------------------------------------
+# Database — RDS MySQL 8.0
+# REQUIRED: set account_id (setup.sh does this automatically)
+# -----------------------------------------------------------------------------
+db_name     = "scalecommerce"
+db_username = "dbadmin"
+
+db_instance_class        = "db.t3.micro"
+db_allocated_storage     = 20
+db_max_allocated_storage = 100
+
+# Cost: Multi-AZ roughly doubles RDS cost — disable for dev
+enable_multi_az        = false
+backup_retention_period = 1
+backup_window          = "02:00-03:00"
+maintenance_window     = "sun:04:00-sun:05:00"
+
+# -----------------------------------------------------------------------------
+# Storage and CDN
+# REQUIRED: set account_id and elb_account_id
+# -----------------------------------------------------------------------------
+account_id     = ""    # REQUIRED — your 12-digit AWS account ID
+elb_account_id = ""    # REQUIRED — ELB service account for your region
+                        # See: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html
+
+cloudfront_price_class = "PriceClass_100"
+
+# -----------------------------------------------------------------------------
+# Monitoring
+# Optional: set your email to receive CloudWatch alarm notifications
+# -----------------------------------------------------------------------------
+alert_email        = ""
+log_retention_days = 14

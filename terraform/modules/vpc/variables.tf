@@ -1,75 +1,60 @@
+# =============================================================================
+# VPC Module — Input Variables
+# =============================================================================
+
 variable "project_name" {
-  description = "Name of the project for resource naming"
+  description = "Short name used as a prefix for all resources (e.g. 'scalecommerce')"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Deployment environment. Controls cost-saving defaults — 'dev' uses single NAT gateway and minimal redundancy; 'prod' uses per-AZ NAT gateways and Multi-AZ RDS."
   type        = string
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "environment must be one of: dev, staging, prod"
+  }
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for VPC"
+  description = "CIDR block for the VPC. /16 gives 65,536 addresses, enough headroom to add subnet tiers later without re-addressing."
   type        = string
   default     = "10.0.0.0/16"
 }
 
-variable "availability_zones" {
-  description = "List of availability zones"
-  type        = list(string)
-  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
-}
-
 variable "public_subnet_cidrs" {
-  description = "CIDR blocks for public subnets"
+  description = "CIDR blocks for public subnets — one per AZ. These host the external ALB, NAT gateways, and bastion. Must be /24 (256 addresses each)."
   type        = list(string)
-  default     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks for private subnets"  
+variable "private_web_subnet_cidrs" {
+  description = "CIDR blocks for private web-tier subnets — one per AZ. These host the web-tier EC2 Auto Scaling Group. No direct internet access; egress via NAT gateway."
   type        = list(string)
-  default     = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+  default     = ["10.0.11.0/24", "10.0.12.0/24"]
 }
 
-variable "database_subnet_cidrs" {
-  description = "CIDR blocks for database subnets"
+variable "private_app_subnet_cidrs" {
+  description = "CIDR blocks for private app-tier subnets — one per AZ. These host the application-tier EC2 Auto Scaling Group. Separated from the web tier to limit blast radius if a web instance is compromised."
   type        = list(string)
-  default     = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+  default     = ["10.0.21.0/24", "10.0.22.0/24"]
 }
 
-variable "enable_nat_gateway" {
-  description = "Enable NAT Gateway for private subnets"
-  type        = bool
-  default     = true
+variable "private_db_subnet_cidrs" {
+  description = "CIDR blocks for private database subnets — one per AZ. RDS requires subnets in at least two AZs even for single-AZ deployments; the second subnet is used for the Multi-AZ standby in production."
+  type        = list(string)
+  default     = ["10.0.31.0/24", "10.0.32.0/24"]
 }
 
 variable "single_nat_gateway" {
-  description = "Use single NAT Gateway for cost optimization"
-  type        = bool
-  default     = false
-}
-
-variable "enable_vpn_gateway" {
-  description = "Enable VPN Gateway"
-  type        = bool
-  default     = false
-}
-
-variable "enable_dns_hostnames" {
-  description = "Enable DNS hostnames in VPC"
-  type        = bool
-  default     = true
-}
-
-variable "enable_dns_support" {
-  description = "Enable DNS support in VPC"
+  description = "Use a single NAT gateway shared across all private subnets. Recommended for dev/lab environments — saves ~$32/month per avoided NAT gateway. Set to false in production for AZ-level fault isolation."
   type        = bool
   default     = true
 }
 
 variable "tags" {
-  description = "Additional tags for resources"
+  description = "Additional tags to merge onto all resources. The module always applies Project, Environment, and ManagedBy tags; use this map for any project-specific extras."
   type        = map(string)
   default     = {}
 }

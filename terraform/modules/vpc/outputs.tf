@@ -1,104 +1,49 @@
-# VPC Outputs
+# =============================================================================
+# VPC Module — Outputs
+# All downstream modules (security, compute, database) depend on these IDs.
+# =============================================================================
+
 output "vpc_id" {
   description = "ID of the VPC"
   value       = aws_vpc.main.id
 }
 
-output "vpc_cidr_block" {
-  description = "CIDR block of the VPC"
+output "vpc_cidr" {
+  description = "CIDR block of the VPC — used by security module to scope NACL rules"
   value       = aws_vpc.main.cidr_block
 }
 
-output "vpc_arn" {
-  description = "ARN of the VPC"
-  value       = aws_vpc.main.arn
-}
-
-# Internet Gateway
 output "internet_gateway_id" {
   description = "ID of the Internet Gateway"
   value       = aws_internet_gateway.main.id
 }
 
-# Public Subnet Outputs
 output "public_subnet_ids" {
-  description = "List of IDs of the public subnets"
+  description = "IDs of the public subnets — passed to the external ALB and bastion host"
   value       = aws_subnet.public[*].id
 }
 
-output "public_subnet_arns" {
-  description = "List of ARNs of the public subnets"
-  value       = aws_subnet.public[*].arn
+output "private_web_subnet_ids" {
+  description = "IDs of the private web-tier subnets — passed to the web-tier ASG"
+  value       = aws_subnet.private_web[*].id
 }
 
-output "public_subnet_cidr_blocks" {
-  description = "List of CIDR blocks of the public subnets"
-  value       = aws_subnet.public[*].cidr_block
+output "private_app_subnet_ids" {
+  description = "IDs of the private app-tier subnets — passed to the app-tier ASG"
+  value       = aws_subnet.private_app[*].id
 }
 
-# Private Subnet Outputs
-output "private_subnet_ids" {
-  description = "List of IDs of the private subnets"
-  value       = aws_subnet.private[*].id
+output "private_db_subnet_ids" {
+  description = "IDs of the private database subnets — passed to the RDS subnet group"
+  value       = aws_subnet.private_db[*].id
 }
 
-output "private_subnet_arns" {
-  description = "List of ARNs of the private subnets"
-  value       = aws_subnet.private[*].arn
-}
-
-output "private_subnet_cidr_blocks" {
-  description = "List of CIDR blocks of the private subnets"
-  value       = aws_subnet.private[*].cidr_block
-}
-
-# Database Subnet Outputs
-output "database_subnet_ids" {
-  description = "List of IDs of the database subnets"
-  value       = aws_subnet.database[*].id
-}
-
-output "database_subnet_group_name" {
-  description = "Name of the database subnet group"
-  value       = try(aws_db_subnet_group.database[0].name, null)
-}
-
-# NAT Gateway Outputs
 output "nat_gateway_ids" {
-  description = "List of IDs of the NAT Gateways"
+  description = "IDs of the NAT gateway(s). One gateway when single_nat_gateway = true; one per AZ otherwise."
   value       = aws_nat_gateway.main[*].id
 }
 
-output "nat_public_ips" {
-  description = "List of public Elastic IPs associated with the NAT Gateways"
-  value       = aws_eip.nat[*].public_ip
-}
-
-# Route Table Outputs
-output "public_route_table_id" {
-  description = "ID of the public route table"
-  value       = aws_route_table.public.id
-}
-
-output "private_route_table_ids" {
-  description = "List of IDs of the private route tables"
-  value       = aws_route_table.private[*].id
-}
-
-output "database_route_table_id" {
-  description = "ID of the database route table"
-  value       = aws_route_table.database.id
-}
-
-# Availability Zone Outputs
 output "availability_zones" {
-  description = "List of availability zones"
-  value       = var.availability_zones
+  description = "Availability zones in use, in the order subnets were created. Index 0 = primary AZ."
+  value       = data.aws_availability_zones.available.names
 }
-
-# VPN Gateway Output
-output "vpn_gateway_id" {
-  description = "ID of the VPN Gateway"
-  value       = try(aws_vpn_gateway.main[0].id, null)
-}
-

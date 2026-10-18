@@ -1,10 +1,15 @@
 variable "project_name" {
-  description = "Name of the project for resource naming"
+  description = "Project name used for resource naming"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Deployment environment (dev, staging, prod)"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
 }
 
@@ -14,154 +19,144 @@ variable "vpc_id" {
 }
 
 variable "public_subnet_ids" {
-  description = "List of public subnet IDs for ALB"
+  description = "List of public subnet IDs for the external ALB and bastion"
   type        = list(string)
 }
 
-variable "private_subnet_ids" {
-  description = "List of private subnet IDs for EC2 instances"
+variable "private_web_subnet_ids" {
+  description = "List of private web subnet IDs for the web tier ASG"
   type        = list(string)
 }
 
-variable "alb_security_group_id" {
-  description = "Security group ID for Application Load Balancer"
+variable "private_app_subnet_ids" {
+  description = "List of private app subnet IDs for the app tier ASG"
+  type        = list(string)
+}
+
+variable "alb_external_sg_id" {
+  description = "Security group ID for the external ALB"
   type        = string
 }
 
-variable "web_tier_security_group_id" {
+variable "alb_internal_sg_id" {
+  description = "Security group ID for the internal ALB"
+  type        = string
+}
+
+variable "web_tier_sg_id" {
   description = "Security group ID for web tier instances"
   type        = string
 }
 
-variable "app_tier_security_group_id" {
-  description = "Security group ID for application tier instances"
+variable "app_tier_sg_id" {
+  description = "Security group ID for app tier instances"
   type        = string
 }
 
-variable "bastion_security_group_id" {
-  description = "Security group ID for bastion host"
+variable "bastion_sg_id" {
+  description = "Security group ID for the bastion host"
   type        = string
-  default     = null
-}
-
-variable "instance_types" {
-  description = "EC2 instance types for different tiers"
-  type = object({
-    web_tier    = string
-    app_tier    = string
-    bastion     = string
-  })
-  default = {
-    web_tier    = "t3.micro"
-    app_tier    = "t3.small"
-    bastion     = "t3.micro"
-  }
-}
-
-variable "auto_scaling_config" {
-  description = "Auto Scaling configuration"
-  type = object({
-    web_tier = object({
-      min_size         = number
-      max_size         = number
-      desired_capacity = number
-      target_cpu       = number
-    })
-    app_tier = object({
-      min_size         = number
-      max_size         = number
-      desired_capacity = number
-      target_cpu       = number
-    })
-  })
-  default = {
-    web_tier = {
-      min_size         = 2
-      max_size         = 6
-      desired_capacity = 3
-      target_cpu       = 70
-    }
-    app_tier = {
-      min_size         = 2
-      max_size         = 4
-      desired_capacity = 2
-      target_cpu       = 60
-    }
-  }
-}
-
-variable "alb_config" {
-  description = "Application Load Balancer configuration"
-  type = object({
-    enable_deletion_protection = bool
-    idle_timeout              = number
-    enable_http2              = bool
-    enable_waf                = bool
-    ssl_certificate_arn       = string
-  })
-  default = {
-    enable_deletion_protection = true
-    idle_timeout              = 60
-    enable_http2              = true
-    enable_waf                = false
-    ssl_certificate_arn       = ""
-  }
-}
-
-variable "health_check_config" {
-  description = "Health check configuration for target groups"
-  type = object({
-    enabled             = bool
-    healthy_threshold   = number
-    unhealthy_threshold = number
-    timeout            = number
-    interval           = number
-    path               = string
-    matcher            = string
-  })
-  default = {
-    enabled             = true
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout            = 5
-    interval           = 30
-    path               = "/health"
-    matcher            = "200"
-  }
-}
-
-variable "key_pair_name" {
-  description = "EC2 Key Pair name for SSH access"
-  type        = string
-  default     = ""
-}
-
-variable "enable_bastion_host" {
-  description = "Enable bastion host for secure access"
-  type        = bool
-  default     = true
-}
-
-variable "enable_detailed_monitoring" {
-  description = "Enable detailed CloudWatch monitoring"
-  type        = bool
-  default     = true
-}
-
-variable "user_data_template" {
-  description = "User data script template for EC2 instances"
-  type        = string
-  default     = ""
 }
 
 variable "ami_id" {
-  description = "AMI ID for EC2 instances (leave empty for latest Amazon Linux 2)"
+  description = "AMI ID for EC2 instances (Amazon Linux 2023)"
+  type        = string
+}
+
+variable "key_pair_name" {
+  description = "Name of the EC2 key pair for SSH access"
+  type        = string
+}
+
+variable "web_instance_type" {
+  description = "Instance type for web tier"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "app_instance_type" {
+  description = "Instance type for app tier"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "bastion_instance_type" {
+  description = "Instance type for bastion host"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "web_min_size" {
+  description = "Minimum number of web tier instances"
+  type        = number
+  default     = 2
+}
+
+variable "web_max_size" {
+  description = "Maximum number of web tier instances"
+  type        = number
+  default     = 10
+}
+
+variable "web_desired_capacity" {
+  description = "Desired number of web tier instances"
+  type        = number
+  default     = 2
+}
+
+variable "app_min_size" {
+  description = "Minimum number of app tier instances"
+  type        = number
+  default     = 2
+}
+
+variable "app_max_size" {
+  description = "Maximum number of app tier instances"
+  type        = number
+  default     = 10
+}
+
+variable "app_desired_capacity" {
+  description = "Desired number of app tier instances"
+  type        = number
+  default     = 2
+}
+
+variable "app_port" {
+  description = "Port the application tier listens on"
+  type        = number
+  default     = 3000
+}
+
+variable "health_check_path" {
+  description = "Path for ALB health checks"
+  type        = string
+  default     = "/health"
+}
+
+variable "certificate_arn" {
+  description = "ARN of the ACM certificate for HTTPS (leave empty for HTTP only)"
   type        = string
   default     = ""
 }
 
+variable "alb_logs_bucket" {
+  description = "S3 bucket name for ALB access logs"
+  type        = string
+}
+
+variable "db_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing DB credentials"
+  type        = string
+}
+
+variable "s3_assets_bucket" {
+  description = "Name of the S3 bucket for static assets"
+  type        = string
+}
+
 variable "tags" {
-  description = "Additional tags for resources"
+  description = "Tags to apply to all resources"
   type        = map(string)
   default     = {}
 }

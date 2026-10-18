@@ -1,112 +1,61 @@
+# =============================================================================
+# Security Module — Input Variables
+# =============================================================================
+
 variable "project_name" {
-  description = "Name of the project for resource naming"
+  description = "Short name used as a prefix for all security group and NACL names"
   type        = string
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Deployment environment (dev, staging, prod)"
   type        = string
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC where security groups will be created"
+  description = "ID of the VPC in which to create security groups and NACLs"
   type        = string
 }
 
-variable "vpc_cidr_block" {
-  description = "CIDR block of the VPC"
+variable "vpc_cidr" {
+  description = "CIDR block of the VPC — used to scope NACL rules to internal traffic only"
   type        = string
 }
 
-variable "public_subnet_cidrs" {
-  description = "CIDR blocks of public subnets"
+variable "public_subnet_ids" {
+  description = "IDs of the public subnets — assigned to the public NACL"
   type        = list(string)
 }
 
-variable "private_subnet_cidrs" {
-  description = "CIDR blocks of private subnets"
+variable "private_web_subnet_ids" {
+  description = "IDs of the private web-tier subnets — assigned to the web NACL"
   type        = list(string)
 }
 
-variable "database_subnet_cidrs" {
-  description = "CIDR blocks of database subnets"
+variable "private_app_subnet_ids" {
+  description = "IDs of the private app-tier subnets — assigned to the app NACL"
   type        = list(string)
 }
 
-variable "enable_ssh_access" {
-  description = "Enable SSH access to instances"
-  type        = bool
-  default     = true
+variable "private_db_subnet_ids" {
+  description = "IDs of the private database subnets — assigned to the DB NACL"
+  type        = list(string)
 }
 
-variable "ssh_cidr_blocks" {
-  description = "CIDR blocks allowed for SSH access"
+variable "allowed_ssh_cidr_blocks" {
+  description = "CIDR blocks permitted to SSH into the bastion host. For security, restrict this to your known IP(s) rather than leaving it open to 0.0.0.0/0."
   type        = list(string)
   default     = ["0.0.0.0/0"]
-  
-  validation {
-    condition = length(var.ssh_cidr_blocks) > 0
-    error_message = "At least one CIDR block must be specified for SSH access."
-  }
 }
 
-variable "allowed_ports" {
-  description = "Map of allowed ports for different services"
-  type = object({
-    http         = number
-    https        = number
-    mysql        = number
-    redis        = number
-    ssh          = number
-    custom_app   = number
-  })
-  default = {
-    http         = 80
-    https        = 443
-    mysql        = 3306
-    redis        = 6379
-    ssh          = 22
-    custom_app   = 8080
-  }
-}
-
-variable "enable_flow_logs" {
-  description = "Enable VPC Flow Logs for security monitoring"
-  type        = bool
-  default     = true
-}
-
-variable "flow_logs_retention" {
-  description = "CloudWatch logs retention period in days"
+variable "app_port" {
+  description = "TCP port the application tier Node.js server listens on. Must match the port configured in the app-tier user-data script."
   type        = number
-  default     = 30
-  
-  validation {
-    condition = contains([1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653], var.flow_logs_retention)
-    error_message = "Flow logs retention must be a valid CloudWatch logs retention period."
-  }
-}
-
-variable "enable_waf" {
-  description = "Enable AWS WAF for application protection"
-  type        = bool
-  default     = true
-}
-
-variable "enable_network_acls" {
-  description = "Enable custom Network ACLs for additional security"
-  type        = bool
-  default     = true
-}
-
-variable "office_ip_ranges" {
-  description = "Office IP ranges for administrative access"
-  type        = list(string)
-  default     = []
+  default     = 3000
 }
 
 variable "tags" {
-  description = "Additional tags for resources"
+  description = "Additional tags merged onto every security group and NACL"
   type        = map(string)
   default     = {}
 }
