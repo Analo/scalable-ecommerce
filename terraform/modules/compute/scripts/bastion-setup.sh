@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Template variables injected by Terraform templatefile()
+# These lowercase names are substituted at plan/apply time.
 ENVIRONMENT="${environment}"
 PROJECT_NAME="${project_name}"
 
@@ -49,7 +50,7 @@ cat >> /home/ec2-user/.bashrc << BASHRC
 alias ll='ls -alF'
 alias ..='cd ..'
 export AWS_DEFAULT_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
-export PS1='\[\033[01;31m\][BASTION ${PROJECT_NAME}-${ENVIRONMENT}]\[\033[00m\] \u@\h:\w\$ '
+export PS1='\[\033[01;31m\][BASTION $${PROJECT_NAME}-$${ENVIRONMENT}]\[\033[00m\] \u@\h:\w\$ '
 BASHRC
 
 # ============================================================
@@ -65,7 +66,7 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CWEOF
         "collect_list": [
           {
             "file_path": "/var/log/secure",
-            "log_group_name": "/aws/ec2/${PROJECT_NAME}-${ENVIRONMENT}/bastion/auth",
+            "log_group_name": "/aws/ec2/$${PROJECT_NAME}-$${ENVIRONMENT}/bastion/auth",
             "log_stream_name": "{instance_id}"
           }
         ]

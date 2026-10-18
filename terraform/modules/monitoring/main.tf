@@ -164,7 +164,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_high_response_time" {
   metric_name         = "TargetResponseTime"
   namespace           = "AWS/ApplicationELB"
   period              = 60
-  statistic           = "p95"
+  extended_statistic  = "p95"
   threshold           = 0.2
   alarm_description   = "p95 response time > 200ms"
   alarm_actions       = [aws_sns_topic.alerts.arn]

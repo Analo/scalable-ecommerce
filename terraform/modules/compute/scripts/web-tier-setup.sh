@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Template variables injected by Terraform templatefile()
+# These lowercase names are substituted at plan/apply time.
 INTERNAL_ALB_DNS="${internal_alb_dns}"
 APP_PORT="${app_port}"
 ENVIRONMENT="${environment}"
@@ -52,8 +53,8 @@ app.use('/api', createProxyMiddleware({
 app.use(express.static('/var/www/html'));
 
 app.listen(PORT, () => {
-  console.log(`Web tier listening on port ${PORT}`);
-  console.log(`Proxying API requests to ${APP_BACKEND}`);
+  console.log(`Web tier listening on port $${PORT}`);
+  console.log(`Proxying API requests to $${APP_BACKEND}`);
 });
 APPEOF
 
@@ -68,7 +69,7 @@ npm install express http-proxy-middleware
 # Pull static assets from S3
 # ============================================================
 mkdir -p /var/www/html
-aws s3 sync "s3://${S3_ASSETS_BUCKET}/static/" /var/www/html/ --region "${REGION}" || echo "No static assets found in S3"
+aws s3 sync "s3://$${S3_ASSETS_BUCKET}/static/" /var/www/html/ --region "$${REGION}" || echo "No static assets found in S3"
 
 # ============================================================
 # systemd service
@@ -82,9 +83,9 @@ After=network.target
 Type=simple
 User=webapp
 WorkingDirectory=/opt/web-tier
-Environment=NODE_ENV=${ENVIRONMENT}
+Environment=NODE_ENV=$${ENVIRONMENT}
 Environment=PORT=80
-Environment=APP_BACKEND=http://${INTERNAL_ALB_DNS}:${APP_PORT}
+Environment=APP_BACKEND=http://$${INTERNAL_ALB_DNS}:$${APP_PORT}
 ExecStart=/usr/bin/node app.js
 Restart=on-failure
 RestartSec=10
@@ -114,7 +115,7 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CWEOF
         "collect_list": [
           {
             "file_path": "/var/log/messages",
-            "log_group_name": "/aws/ec2/${PROJECT_NAME}-${ENVIRONMENT}/web-tier/system",
+            "log_group_name": "/aws/ec2/$${PROJECT_NAME}-$${ENVIRONMENT}/web-tier/system",
             "log_stream_name": "{instance_id}"
           }
         ]
@@ -123,8 +124,8 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CWEOF
   },
   "metrics": {
     "append_dimensions": {
-      "InstanceId": "\${aws:InstanceId}",
-      "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
+      "InstanceId": "$${aws:InstanceId}",
+      "AutoScalingGroupName": "$${aws:AutoScalingGroupName}"
     },
     "metrics_collected": {
       "mem": {

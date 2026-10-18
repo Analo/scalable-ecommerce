@@ -47,7 +47,7 @@ resource "aws_security_group" "alb_external" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTP — redirected to HTTPS by the ALB listener rule"
+    description = "HTTP - redirected to HTTPS by the ALB listener rule"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -55,7 +55,7 @@ resource "aws_security_group" "alb_external" {
   }
 
   ingress {
-    description = "HTTPS — primary listener; terminates TLS at the ALB"
+    description = "HTTPS - primary listener; terminates TLS at the ALB"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -102,7 +102,7 @@ resource "aws_security_group" "web_tier" {
   }
 
   ingress {
-    description     = "SSH from bastion — admin access only, not for routine deployments"
+    description     = "SSH from bastion - admin access only, not for routine deployments"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
@@ -171,7 +171,7 @@ resource "aws_security_group" "app_tier" {
   }
 
   ingress {
-    description     = "SSH from bastion — for debugging only"
+    description     = "SSH from bastion - for debugging only"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
@@ -203,7 +203,7 @@ resource "aws_security_group" "database" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "MySQL from app tier — primary application access path"
+    description     = "MySQL from app tier - primary application access path"
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
@@ -211,7 +211,7 @@ resource "aws_security_group" "database" {
   }
 
   ingress {
-    description     = "MySQL from bastion — DBA access for migrations and maintenance"
+    description     = "MySQL from bastion - DBA access for migrations and maintenance"
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
@@ -243,7 +243,7 @@ resource "aws_security_group" "bastion" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description = "SSH from approved source IPs — restrict to known IPs in terraform.tfvars"
+    description = "SSH from approved source IPs - restrict to known IPs in terraform.tfvars"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"

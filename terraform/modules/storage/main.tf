@@ -65,6 +65,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "assets" {
     id     = "transition-old-versions"
     status = "Enabled"
 
+    filter {}
+
     noncurrent_version_transition {
       noncurrent_days = 30
       storage_class   = "STANDARD_IA"
@@ -103,6 +105,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
   rule {
     id     = "expire-logs"
     status = "Enabled"
+
+    filter {}
 
     expiration {
       days = 90

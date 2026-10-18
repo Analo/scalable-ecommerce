@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # Template variables injected by Terraform templatefile()
+# These lowercase names are substituted at plan/apply time.
 DB_SECRET_ARN="${db_secret_arn}"
 ENVIRONMENT="${environment}"
 PROJECT_NAME="${project_name}"
@@ -18,8 +19,8 @@ dnf install -y nodejs npm amazon-cloudwatch-agent aws-cli jq mysql
 # Fetch DB credentials from Secrets Manager
 # ============================================================
 DB_SECRET=$(aws secretsmanager get-secret-value \
-  --secret-id "${DB_SECRET_ARN}" \
-  --region "${REGION}" \
+  --secret-id "$${DB_SECRET_ARN}" \
+  --region "$${REGION}" \
   --query SecretString \
   --output text)
 
@@ -102,7 +103,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`App tier listening on port ${PORT}`);
+  console.log(`App tier listening on port $${PORT}`);
 });
 APPEOF
 
@@ -117,13 +118,13 @@ npm install express mysql2
 # Write environment file
 # ============================================================
 cat > /opt/app-tier/.env << ENVEOF
-NODE_ENV=${ENVIRONMENT}
-PORT=${APP_PORT}
-DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT}
-DB_NAME=${DB_NAME}
-DB_USER=${DB_USER}
-DB_PASS=${DB_PASS}
+NODE_ENV=$${ENVIRONMENT}
+PORT=$${APP_PORT}
+DB_HOST=$${DB_HOST}
+DB_PORT=$${DB_PORT}
+DB_NAME=$${DB_NAME}
+DB_USER=$${DB_USER}
+DB_PASS=$${DB_PASS}
 ENVEOF
 
 chmod 600 /opt/app-tier/.env
@@ -170,7 +171,7 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CWEOF
         "collect_list": [
           {
             "file_path": "/var/log/messages",
-            "log_group_name": "/aws/ec2/${PROJECT_NAME}-${ENVIRONMENT}/app-tier/system",
+            "log_group_name": "/aws/ec2/$${PROJECT_NAME}-$${ENVIRONMENT}/app-tier/system",
             "log_stream_name": "{instance_id}"
           }
         ]
@@ -179,8 +180,8 @@ cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << CWEOF
   },
   "metrics": {
     "append_dimensions": {
-      "InstanceId": "\${aws:InstanceId}",
-      "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
+      "InstanceId": "$${aws:InstanceId}",
+      "AutoScalingGroupName": "$${aws:AutoScalingGroupName}"
     },
     "metrics_collected": {
       "mem": { "measurement": ["mem_used_percent"] },
