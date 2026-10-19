@@ -62,10 +62,44 @@ const dbConfig = {
 let pool;
 
 async function getPool() {
-  if (!pool) {
-    pool = await mysql.createPool(dbConfig);
-  }
+  if (!pool) pool = await mysql.createPool(dbConfig);
   return pool;
+}
+
+// Create tables and seed sample data on first boot — idempotent via IF NOT EXISTS
+async function initDb() {
+  const db = await getPool();
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      name        VARCHAR(255)   NOT NULL,
+      description TEXT,
+      price       DECIMAL(10,2)  NOT NULL,
+      stock       INT            NOT NULL DEFAULT 0,
+      created_at  TIMESTAMP      DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id               INT AUTO_INCREMENT PRIMARY KEY,
+      product_id       INT,
+      quantity         INT           NOT NULL,
+      customer_email   VARCHAR(255)  NOT NULL,
+      created_at       TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (product_id) REFERENCES products(id)
+    )
+  `);
+  const [[{ count }]] = await db.query('SELECT COUNT(*) AS count FROM products');
+  if (count === 0) {
+    await db.query(`
+      INSERT INTO products (name, description, price, stock) VALUES
+      ('Laptop Pro 15',   'High-performance 15-inch laptop',   999.99, 50),
+      ('Wireless Mouse',  'Ergonomic wireless mouse',           29.99, 200),
+      ('USB-C Hub 7-in-1','7-port USB-C hub with HDMI',         49.99, 150),
+      ('Mechanical Keyboard', 'Tenkeyless mechanical keyboard', 79.99, 100)
+    `);
+  }
+  console.log('Database initialised');
 }
 
 app.get('/health', async (req, res) => {
@@ -78,7 +112,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-app.get('/api/products', async (req, res) => {
+app.get('/products', async (req, res) => {
   try {
     const db = await getPool();
     const [rows] = await db.query('SELECT * FROM products LIMIT 50');
@@ -88,7 +122,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/orders', async (req, res) => {
+app.post('/orders', async (req, res) => {
   const { product_id, quantity, customer_email } = req.body;
   try {
     const db = await getPool();
@@ -102,9 +136,9 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`App tier listening on port $${PORT}`);
-});
+initDb()
+  .then(() => app.listen(PORT, () => console.log(`App tier listening on port $${PORT}`)))
+  .catch(err => { console.error('DB init failed:', err.message); process.exit(1); });
 APPEOF
 
 # ============================================================
