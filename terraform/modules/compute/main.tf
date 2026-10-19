@@ -81,7 +81,11 @@ resource "aws_lb_target_group" "web_tier" {
   })
 }
 
+# HTTP → HTTPS redirect: only created when a certificate is provided.
+# Without HTTPS there is nothing to redirect to, so external_http_forward handles port 80 instead.
 resource "aws_lb_listener" "external_http" {
+  count = var.certificate_arn != "" ? 1 : 0
+
   load_balancer_arn = aws_lb.external.arn
   port              = 80
   protocol          = "HTTP"
