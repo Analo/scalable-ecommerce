@@ -13,7 +13,7 @@ APP_PORT="${app_port}"
 # System update and package install
 # ============================================================
 dnf update -y
-dnf install -y nodejs npm amazon-cloudwatch-agent aws-cli jq mysql
+dnf install -y nodejs npm amazon-cloudwatch-agent aws-cli jq mariadb105
 
 # ============================================================
 # Fetch DB credentials from Secrets Manager
