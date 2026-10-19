@@ -21,8 +21,10 @@ FAILURES=0
 # ============================================================
 pushd "$TERRAFORM_DIR" > /dev/null
 
-ALB_DNS=$(terraform output -raw external_alb_dns_name 2>/dev/null || echo "")
-CF_DOMAIN=$(terraform output -raw cloudfront_domain_name 2>/dev/null || echo "")
+# application_url includes the http:// scheme — strip it to get the raw DNS name
+APP_URL=$(terraform output -raw application_url 2>/dev/null || echo "")
+ALB_DNS="${APP_URL#http://}"
+CF_DOMAIN=$(terraform output -raw cloudfront_domain 2>/dev/null || echo "")
 
 popd > /dev/null
 

@@ -41,11 +41,9 @@ resource "aws_cloudwatch_log_group" "bastion" {
   tags              = var.tags
 }
 
-resource "aws_cloudwatch_log_group" "rds" {
-  name              = "/aws/rds/instance/${local.name_prefix}-mysql/error"
-  retention_in_days = 30
-  tags              = var.tags
-}
+# RDS auto-creates /aws/rds/instance/*/error (and other log groups) when
+# enabled_cloudwatch_logs_exports is set — Terraform must not own them or
+# apply will fail with ResourceAlreadyExistsException on a fresh deploy.
 
 # ============================================================
 # CloudWatch Dashboard

@@ -30,7 +30,7 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 const APP_BACKEND = process.env.APP_BACKEND;
 
 app.use((req, res, next) => {
@@ -84,7 +84,7 @@ Type=simple
 User=webapp
 WorkingDirectory=/opt/web-tier
 Environment=NODE_ENV=$${ENVIRONMENT}
-Environment=PORT=80
+Environment=PORT=3000
 Environment=APP_BACKEND=http://$${INTERNAL_ALB_DNS}:$${APP_PORT}
 ExecStart=/usr/bin/node app.js
 Restart=on-failure

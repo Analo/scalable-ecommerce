@@ -15,7 +15,7 @@
 #
 # Traffic flow enforced by security groups:
 #   Internet → External ALB (80/443)
-#   External ALB → Web tier (80/443)
+#   External ALB → Web tier (3000 — ALB terminates TLS, forwards plain HTTP)
 #   Web tier → Internal ALB (app port)
 #   Internal ALB → App tier (app port)
 #   App tier → RDS (3306)
@@ -86,17 +86,9 @@ resource "aws_security_group" "web_tier" {
   vpc_id      = var.vpc_id
 
   ingress {
-    description     = "HTTP from external ALB"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb_external.id]
-  }
-
-  ingress {
-    description     = "HTTPS from external ALB"
-    from_port       = 443
-    to_port         = 443
+    description     = "Node.js app from external ALB - ALB terminates TLS and forwards plain HTTP on 3000"
+    from_port       = 3000
+    to_port         = 3000
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_external.id]
   }
@@ -354,22 +346,14 @@ resource "aws_network_acl" "private_web" {
   vpc_id     = var.vpc_id
   subnet_ids = var.private_web_subnet_ids
 
+  # ALB forwards traffic to the Node.js app on port 3000 (not 80 — non-root process)
   ingress {
     rule_no    = 100
     protocol   = "tcp"
     action     = "allow"
     cidr_block = "0.0.0.0/0"
-    from_port  = 80
-    to_port    = 80
-  }
-
-  ingress {
-    rule_no    = 110
-    protocol   = "tcp"
-    action     = "allow"
-    cidr_block = "0.0.0.0/0"
-    from_port  = 443
-    to_port    = 443
+    from_port  = 3000
+    to_port    = 3000
   }
 
   ingress {

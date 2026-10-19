@@ -30,6 +30,29 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
+# s3:ListBucket is required by `aws s3 sync` in addition to s3:GetObject —
+# without it the CLI cannot enumerate objects and fails with AccessDenied.
+resource "aws_iam_role_policy" "ec2_s3_assets" {
+  name = "${local.name_prefix}-ec2-s3-assets"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:GetObjectVersion"]
+        Resource = "arn:aws:s3:::${var.s3_assets_bucket}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "s3:ListBucket"
+        Resource = "arn:aws:s3:::${var.s3_assets_bucket}"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${local.name_prefix}-ec2-profile"
   role = aws_iam_role.ec2_role.name
@@ -60,7 +83,7 @@ resource "aws_lb" "external" {
 
 resource "aws_lb_target_group" "web_tier" {
   name     = "${local.name_prefix}-web-tg"
-  port     = 80
+  port     = 3000
   protocol = "HTTP"
   vpc_id   = var.vpc_id
 
