@@ -132,9 +132,10 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot       = var.environment != "prod"
   final_snapshot_identifier = var.environment == "prod" ? "${local.name_prefix}-final-snapshot" : null
 
-  performance_insights_enabled          = true
-  performance_insights_kms_key_id       = aws_kms_key.rds.arn
-  performance_insights_retention_period = 7
+  # Performance Insights requires db.t3.small or larger — disabled for dev (t3.micro)
+  performance_insights_enabled          = var.environment == "prod"
+  performance_insights_kms_key_id       = var.environment == "prod" ? aws_kms_key.rds.arn : null
+  performance_insights_retention_period = var.environment == "prod" ? 7 : 0
 
   enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
 
@@ -187,7 +188,7 @@ resource "aws_db_instance" "replica" {
   skip_final_snapshot = true
   auto_minor_version_upgrade = true
 
-  performance_insights_enabled = true
+  performance_insights_enabled = var.environment == "prod"
   monitoring_interval          = 60
   monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
 
