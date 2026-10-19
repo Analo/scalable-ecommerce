@@ -77,7 +77,9 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   name                    = "${local.name_prefix}/rds/credentials"
   description             = "RDS credentials for ${local.name_prefix}"
   kms_key_id              = aws_kms_key.rds.key_id
-  recovery_window_in_days = var.environment == "prod" ? 30 : 7
+  # 0 = force-delete immediately on destroy (no recovery window) — required for
+  # destroy-redeploy cycles in dev because AWS blocks recreation during the window.
+  recovery_window_in_days = var.environment == "prod" ? 30 : 0
 
   tags = merge(var.tags, {
     Name = "${local.name_prefix}-db-credentials"

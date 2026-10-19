@@ -155,6 +155,11 @@ variable "s3_assets_bucket" {
   type        = string
 }
 
+variable "db_kms_key_arn" {
+  description = "ARN of the KMS key used to encrypt the RDS secret in Secrets Manager"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)

@@ -53,6 +53,30 @@ resource "aws_iam_role_policy" "ec2_s3_assets" {
   })
 }
 
+# The app-tier user-data fetches DB credentials from Secrets Manager at boot.
+# Without secretsmanager:GetSecretValue + kms:Decrypt, the script aborts before
+# installing the service, leaving the instance with nothing listening on app_port.
+resource "aws_iam_role_policy" "ec2_secrets_access" {
+  name = "${local.name_prefix}-ec2-secrets-access"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = var.db_secret_arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:DescribeKey"]
+        Resource = var.db_kms_key_arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "ec2_profile" {
   name = "${local.name_prefix}-ec2-profile"
   role = aws_iam_role.ec2_role.name

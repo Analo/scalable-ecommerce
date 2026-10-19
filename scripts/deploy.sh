@@ -55,10 +55,11 @@ rm -f tfplan
 # ============================================================
 log "Fetching deployment outputs..."
 
-EXTERNAL_ALB_DNS=$(terraform output -raw external_alb_dns_name 2>/dev/null || echo "N/A")
-CLOUDFRONT_DOMAIN=$(terraform output -raw cloudfront_domain_name 2>/dev/null || echo "N/A")
-BASTION_IP=$(terraform output -raw bastion_public_ip 2>/dev/null || echo "N/A")
-DASHBOARD_URL=$(terraform output -raw dashboard_url 2>/dev/null || echo "N/A")
+APP_URL=$(terraform output -raw application_url 2>/dev/null || echo "N/A")
+EXTERNAL_ALB_DNS="${APP_URL#http://}"
+CLOUDFRONT_DOMAIN=$(terraform output -raw cloudfront_domain 2>/dev/null || echo "N/A")
+BASTION_SSH=$(terraform output -raw bastion_ssh_command 2>/dev/null || echo "N/A")
+DASHBOARD_URL=$(terraform output -raw monitoring_dashboard_url 2>/dev/null || echo "N/A")
 
 popd > /dev/null
 
@@ -72,7 +73,7 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo -e "  ${CYAN}Application URL:${NC}     http://$EXTERNAL_ALB_DNS"
 echo -e "  ${CYAN}CDN URL:${NC}             https://$CLOUDFRONT_DOMAIN"
-echo -e "  ${CYAN}Bastion SSH:${NC}         ssh -i ~/.ssh/scalecommerce-key ec2-user@$BASTION_IP"
+echo -e "  ${CYAN}Bastion SSH:${NC}         $BASTION_SSH"
 echo -e "  ${CYAN}CloudWatch Dashboard:${NC} $DASHBOARD_URL"
 echo ""
 echo "  Run ./scripts/health-check.sh to verify all endpoints"

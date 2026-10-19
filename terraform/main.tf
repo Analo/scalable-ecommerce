@@ -121,6 +121,7 @@ module "compute" {
   certificate_arn        = var.certificate_arn
   alb_logs_bucket        = module.storage.alb_logs_bucket_name
   db_secret_arn          = module.database.db_secret_arn
+  db_kms_key_arn         = module.database.db_kms_key_arn
   s3_assets_bucket       = module.storage.assets_bucket_name
   tags                   = local.tags
 
