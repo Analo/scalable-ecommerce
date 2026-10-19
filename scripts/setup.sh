@@ -130,17 +130,19 @@ else
 
   # ELB service account IDs are region-specific — required for ALB access logs
   # Full list: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html
-  declare -A ELB_ACCOUNTS=(
-    ["us-east-1"]="127311923021"
-    ["us-east-2"]="033677994240"
-    ["us-west-1"]="027434742980"
-    ["us-west-2"]="797873946194"
-    ["eu-west-1"]="156460612806"
-    ["eu-central-1"]="054676820928"
-    ["ap-southeast-1"]="114774131450"
-    ["ap-northeast-1"]="582318560864"
-  )
-  ELB_ACCOUNT_ID="${ELB_ACCOUNTS[$AWS_REGION]:-}"
+  # Using case instead of declare -A for bash 3.x compatibility (macOS default shell)
+  case "$AWS_REGION" in
+    us-east-1)      ELB_ACCOUNT_ID="127311923021" ;;
+    us-east-2)      ELB_ACCOUNT_ID="033677994240" ;;
+    us-west-1)      ELB_ACCOUNT_ID="027434742980" ;;
+    us-west-2)      ELB_ACCOUNT_ID="797873946194" ;;
+    eu-west-1)      ELB_ACCOUNT_ID="156460612806" ;;
+    eu-west-2)      ELB_ACCOUNT_ID="652711504416" ;;
+    eu-central-1)   ELB_ACCOUNT_ID="054676820928" ;;
+    ap-southeast-1) ELB_ACCOUNT_ID="114774131450" ;;
+    ap-northeast-1) ELB_ACCOUNT_ID="582318560864" ;;
+    *)              ELB_ACCOUNT_ID="" ;;
+  esac
   [[ -n "$ELB_ACCOUNT_ID" ]] \
     || warn "ELB account ID not found for $AWS_REGION — set elb_account_id manually in tfvars"
 
