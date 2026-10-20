@@ -55,6 +55,7 @@ jobs:
             -var="environment=dev" \
             -var="aws_region=${{ secrets.AWS_REGION }}" \
             -var="account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="elb_account_id=${{ secrets.ELB_ACCOUNT_ID }}" \
             -var="key_pair_name=${{ secrets.KEY_PAIR_NAME }}" \
             -var="ami_id=${{ secrets.AMI_ID }}"
         working-directory: terraform

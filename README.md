@@ -8,31 +8,56 @@ This was built to solve a specific problem: how do you design an AWS environment
 
 ## Architecture
 
-```
-Internet
-    |
-[External ALB]  — public subnets, two AZs
-    |
-[Web Tier ASG]  — private subnets, Node.js reverse proxy
-    |
-[Internal ALB]  — routes to app tier only
-    |
-[App Tier ASG]  — private subnets, Node.js API + business logic
-    |
-[RDS MySQL 8.0] — isolated DB subnets, Multi-AZ in production
+```mermaid
+graph TB
+    Internet((Internet))
 
-[S3 + CloudFront] — static assets served from edge
-[Bastion Host]    — only SSH entry point into private subnets
+    subgraph CDN["Global Edge — CloudFront + S3"]
+        CF[CloudFront CDN]
+        S3[(S3 Assets\nKMS encrypted)]
+        CF -- origin --> S3
+    end
+
+    subgraph PUBLIC["Public Subnets — AZ-1 & AZ-2"]
+        ALB_EXT["External ALB\nport 80 / 443"]
+        NAT[NAT Gateway]
+        BASTION["Bastion Host\nSSH entry point"]
+    end
+
+    subgraph WEB["Private Web Subnets — AZ-1 & AZ-2"]
+        WEB_ASG["Web Tier ASG\nNode.js reverse proxy · port 3000"]
+        ALB_INT["Internal ALB"]
+    end
+
+    subgraph APP["Private App Subnets — AZ-1 & AZ-2"]
+        APP_ASG["App Tier ASG\nNode.js REST API · port 3000"]
+    end
+
+    subgraph DB["Private DB Subnets — AZ-1 & AZ-2"]
+        RDS[("RDS MySQL 8.0\nKMS encrypted\nSecrets Manager creds")]
+    end
+
+    Internet -->|HTTP/HTTPS| ALB_EXT
+    Internet -->|HTTPS| CF
+    ALB_EXT --> WEB_ASG
+    WEB_ASG --> ALB_INT
+    ALB_INT --> APP_ASG
+    APP_ASG --> RDS
+    WEB_ASG -->|egress via NAT| NAT
+    APP_ASG -->|egress via NAT| NAT
+    BASTION -.->|SSH| WEB_ASG
+    BASTION -.->|SSH| APP_ASG
+    BASTION -.->|MySQL 3306| RDS
 ```
 
 Network layout across two availability zones:
 
-| Subnet Tier  | AZ-1          | AZ-2          |
-|--------------|---------------|---------------|
-| Public       | 10.0.1.0/24   | 10.0.2.0/24   |
-| Web (private)| 10.0.11.0/24  | 10.0.12.0/24  |
-| App (private)| 10.0.21.0/24  | 10.0.22.0/24  |
-| DB (private) | 10.0.31.0/24  | 10.0.32.0/24  |
+| Subnet Tier   | AZ-1           | AZ-2           |
+|---------------|----------------|----------------|
+| Public        | 10.0.1.0/24    | 10.0.2.0/24    |
+| Web (private) | 10.0.11.0/24   | 10.0.12.0/24   |
+| App (private) | 10.0.21.0/24   | 10.0.22.0/24   |
+| DB (private)  | 10.0.31.0/24   | 10.0.32.0/24   |
 
 ---
 

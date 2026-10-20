@@ -5,6 +5,7 @@
 !*.tfvars.example
 .terraform/
 .terraform.lock.hcl
+tfplan
 
 # AWS & Cloud
 .aws/

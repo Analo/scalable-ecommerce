@@ -23,7 +23,8 @@ command -v hey &>/dev/null || fail "'hey' load testing tool not installed. Insta
 command -v terraform &>/dev/null || fail "terraform not installed"
 
 pushd "$TERRAFORM_DIR" > /dev/null
-ALB_DNS=$(terraform output -raw external_alb_dns_name 2>/dev/null || echo "")
+APP_URL=$(terraform output -raw application_url 2>/dev/null || echo "")
+ALB_DNS="${APP_URL#http://}"
 popd > /dev/null
 
 [[ -n "$ALB_DNS" ]] || fail "Could not read ALB DNS. Is the stack deployed?"

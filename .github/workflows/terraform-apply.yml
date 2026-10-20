@@ -47,6 +47,7 @@ jobs:
             -var="environment=dev" \
             -var="aws_region=${{ secrets.AWS_REGION }}" \
             -var="account_id=${{ secrets.AWS_ACCOUNT_ID }}" \
+            -var="elb_account_id=${{ secrets.ELB_ACCOUNT_ID }}" \
             -var="key_pair_name=${{ secrets.KEY_PAIR_NAME }}" \
             -var="ami_id=${{ secrets.AMI_ID }}"
         working-directory: terraform
@@ -58,8 +59,8 @@ jobs:
       - name: Capture Outputs
         id: outputs
         run: |
-          echo "alb_dns=$(terraform output -raw external_alb_dns_name)" >> $GITHUB_OUTPUT
-          echo "cf_domain=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_OUTPUT
+          echo "app_url=$(terraform output -raw application_url)" >> $GITHUB_OUTPUT
+          echo "cf_domain=$(terraform output -raw cloudfront_domain)" >> $GITHUB_OUTPUT
         working-directory: terraform
 
       - name: Deployment Summary
@@ -68,5 +69,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| ALB DNS | ${{ steps.outputs.outputs.alb_dns }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Application URL | ${{ steps.outputs.outputs.app_url }} |" >> $GITHUB_STEP_SUMMARY
           echo "| CloudFront | ${{ steps.outputs.outputs.cf_domain }} |" >> $GITHUB_STEP_SUMMARY
