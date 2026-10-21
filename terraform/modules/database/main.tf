@@ -74,9 +74,9 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "${local.name_prefix}/rds/credentials"
-  description             = "RDS credentials for ${local.name_prefix}"
-  kms_key_id              = aws_kms_key.rds.key_id
+  name        = "${local.name_prefix}/rds/credentials"
+  description = "RDS credentials for ${local.name_prefix}"
+  kms_key_id  = aws_kms_key.rds.key_id
   # 0 = force-delete immediately on destroy (no recovery window) — required for
   # destroy-redeploy cycles in dev because AWS blocks recreation during the window.
   recovery_window_in_days = var.environment == "prod" ? 30 : 0
@@ -125,9 +125,9 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [var.database_sg_id]
   parameter_group_name   = aws_db_parameter_group.mysql8.name
 
-  backup_retention_period   = var.environment == "prod" ? 7 : 1
-  backup_window             = "02:00-03:00"
-  maintenance_window        = "sun:04:00-sun:05:00"
+  backup_retention_period    = var.environment == "prod" ? 7 : 1
+  backup_window              = "02:00-03:00"
+  maintenance_window         = "sun:04:00-sun:05:00"
   auto_minor_version_upgrade = true
 
   deletion_protection       = var.environment == "prod"
@@ -187,7 +187,7 @@ resource "aws_db_instance" "replica" {
   kms_key_id             = aws_kms_key.rds.arn
   vpc_security_group_ids = [var.database_sg_id]
 
-  skip_final_snapshot = true
+  skip_final_snapshot        = true
   auto_minor_version_upgrade = true
 
   performance_insights_enabled = var.environment == "prod"

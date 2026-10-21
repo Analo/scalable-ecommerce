@@ -8,6 +8,8 @@ This was built to solve a specific problem: how do you design an AWS environment
 
 ## Architecture
 
+> **Full diagram with AWS icons:** [`docs/architecture.drawio`](./docs/architecture.drawio) — open in [draw.io](https://app.diagrams.net/) or the VS Code Draw.io extension for the production-quality version.
+
 ```mermaid
 graph TB
     Internet((Internet))
