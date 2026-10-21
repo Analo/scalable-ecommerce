@@ -162,15 +162,46 @@ In your GitHub repository: **Settings → Secrets and variables → Actions**
 
 ### Create GitHub Actions IAM Role (OIDC)
 
+> **Important — GitHub OIDC sub claim format**
+>
+> GitHub now includes numeric user/repository IDs in the OIDC `sub` claim to prevent
+> claim-squatting attacks after repo transfers or renames. The actual sub claim looks like:
+>
+> ```
+> repo:Analo@13014489/scalable-ecommerce@1046386513:pull_request
+> ```
+>
+> The trust policy must match this format exactly. Get your IDs with:
+> ```bash
+> gh api /user --jq '"User ID: \(.id), Login: \(.login)"'
+> gh api /repos/OWNER/REPO --jq '"Repo ID: \(.id)"'
+> ```
+
 ```bash
-# Create trust policy for GitHub OIDC
+# 1 — Fetch your user and repo IDs
+OWNER="Analo"
+REPO="scalable-ecommerce"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+USER_ID=$(gh api /user --jq '.id')
+REPO_ID=$(gh api /repos/${OWNER}/${REPO} --jq '.id')
+
+# 2 — Create the OIDC provider (skip if it already exists)
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com \
+  --thumbprint-list \
+    6938fd4d98bab03faadb97b34396831e3780aea1 \
+    1c58a3a8518e8759bf075b76b750d4f2df264fcd \
+    06d927fecd0a84aeba28aad1d808139470fe95c3
+
+# 3 — Create the trust policy with the correct sub claim format
 cat > trust-policy.json << EOF
 {
   "Version": "2012-10-17",
   "Statement": [{
     "Effect": "Allow",
     "Principal": {
-      "Federated": "arn:aws:iam::$(aws sts get-caller-identity --query Account --output text):oidc-provider/token.actions.githubusercontent.com"
+      "Federated": "arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"
     },
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {
@@ -178,13 +209,14 @@ cat > trust-policy.json << EOF
         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
       },
       "StringLike": {
-        "token.actions.githubusercontent.com:sub": "repo:Analo/scalable-ecommerce:*"
+        "token.actions.githubusercontent.com:sub": "repo:${OWNER}@${USER_ID}/${REPO}@${REPO_ID}:*"
       }
     }
   }]
 }
 EOF
 
+# 4 — Create the role and attach permissions
 aws iam create-role \
   --role-name ScaleCommerceGitHubActions \
   --assume-role-policy-document file://trust-policy.json
@@ -192,7 +224,19 @@ aws iam create-role \
 aws iam attach-role-policy \
   --role-name ScaleCommerceGitHubActions \
   --policy-arn arn:aws:iam::aws:policy/PowerUserAccess
+
+rm trust-policy.json
 ```
+
+Also set the `ELB_ACCOUNT_ID` secret — this is the AWS-owned account ID for the ELB service in your region, required for the ALB access log bucket policy:
+
+| Region | ELB Account ID |
+|---|---|
+| `us-east-1` | `127311923021` |
+| `eu-west-1` | `156460612806` |
+| `ap-southeast-1` | `114774131450` |
+
+See the [full list in AWS docs](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html).
 
 ---
 
