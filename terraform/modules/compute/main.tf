@@ -316,9 +316,9 @@ resource "aws_autoscaling_group" "web_tier" {
 
   dynamic "tag" {
     for_each = merge(var.tags, {
-      Name                                = "${local.name_prefix}-web-tier"
-      Tier                                = "web"
-      "aws-autoscaling-groupName"         = "${local.name_prefix}-web-asg"
+      Name                        = "${local.name_prefix}-web-tier"
+      Tier                        = "web"
+      "aws-autoscaling-groupName" = "${local.name_prefix}-web-asg"
     })
     content {
       key                 = tag.key
@@ -430,9 +430,9 @@ resource "aws_autoscaling_group" "app_tier" {
 
   dynamic "tag" {
     for_each = merge(var.tags, {
-      Name                                = "${local.name_prefix}-app-tier"
-      Tier                                = "app"
-      "aws-autoscaling-groupName"         = "${local.name_prefix}-app-asg"
+      Name                        = "${local.name_prefix}-app-tier"
+      Tier                        = "app"
+      "aws-autoscaling-groupName" = "${local.name_prefix}-app-asg"
     })
     content {
       key                 = tag.key

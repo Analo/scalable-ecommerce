@@ -365,9 +365,9 @@ resource "aws_lambda_function" "custom_metrics" {
 
   environment {
     variables = {
-      WEB_ASG_NAME  = var.web_asg_name
-      APP_ASG_NAME  = var.app_asg_name
-      NAMESPACE     = "${var.project_name}/${var.environment}"
+      WEB_ASG_NAME = var.web_asg_name
+      APP_ASG_NAME = var.app_asg_name
+      NAMESPACE    = "${var.project_name}/${var.environment}"
     }
   }
 
